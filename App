@@ -1,0 +1,78 @@
+import sqlite3
+import hashlib
+
+# Хэш пароля
+def hash_pass(p):
+    return hashlib.sha256(p.encode()).hexdigest()
+
+# Подключение к БД
+db = sqlite3.connect('users.db')
+c = db.cursor()
+
+# Создание таблицы
+c.execute('''CREATE TABLE IF NOT EXISTS users
+             (id INTEGER PRIMARY KEY, login TEXT UNIQUE, pass TEXT)''')
+db.commit()
+
+# Регистрация
+def register():
+    login = input("Логин: ")
+    passw = input("Пароль: ")
+    try:
+        c.execute("INSERT INTO users (login, pass) VALUES (?, ?)", (login, hash_pass(passw)))
+        db.commit()
+        print("✅ Зарегистрирован")
+    except:
+        print("❌ Логин занят")
+
+# Вход
+def login():
+    login = input("Логин: ")
+    passw = input("Пароль: ")
+    c.execute("SELECT * FROM users WHERE login=? AND pass=?", (login, hash_pass(passw)))
+    if c.fetchone():
+        print("✅ Добро пожаловать!")
+        return True
+    print("❌ Неверно")
+    return False
+
+# Список
+def show_users():
+    for row in c.execute("SELECT id, login FROM users"):
+        print(f"{row[0]}. {row[1]}")
+
+# Экспорт CSV
+def export():
+    with open('users.csv', 'w') as f:
+        f.write("login,pass\n")
+        for row in c.execute("SELECT login, pass FROM users"):
+            f.write(f"{row[0]},{row[1]}\n")
+    print("✅ Экспортировано в users.csv")
+
+# Импорт CSV
+def import_csv():
+    try:
+        with open('users.csv', 'r') as f:
+            lines = f.readlines()[1:]
+            for line in lines:
+                l, p = line.strip().split(',')
+                c.execute("INSERT OR IGNORE INTO users (login, pass) VALUES (?, ?)", (l, p))
+            db.commit()
+        print("✅ Импортировано")
+    except:
+        print("❌ Ошибка импорта")
+
+# Главное меню
+while True:
+    print("\n1-Регистрация 2-Вход 3-Список 4-Экспорт 5-Импорт 6-Выход")
+    cmd = input("> ")
+    
+    if cmd == '1': register()
+    elif cmd == '2': login()
+    elif cmd == '3': show_users()
+    elif cmd == '4': export()
+    elif cmd == '5': import_csv()
+    elif cmd == '6': break
+    else: print("❌ Неверно")
+
+db.close()
