@@ -1,0 +1,137 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+import sqlite3
+import hashlib
+
+# ========== БАЗА ДАННЫХ ==========
+def hash_pass(p):
+    return hashlib.sha256(p.encode()).hexdigest()
+
+db = sqlite3.connect('users.db')
+c = db.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS users
+             (id INTEGER PRIMARY KEY, login TEXT UNIQUE, pass TEXT)''')
+db.commit()
+
+# ========== ОКНО ==========
+root = tk.Tk()
+root.title("User Manager")
+root.geometry("500x400")
+
+# ========== ФУНКЦИИ ==========
+def register():
+    login = entry_login.get()
+    password = entry_pass.get()
+    
+    if not login or not password:
+        messagebox.showerror("Ошибка", "Заполните все поля!")
+        return
+    
+    try:
+        c.execute("INSERT INTO users (login, pass) VALUES (?, ?)", (login, hash_pass(password)))
+        db.commit()
+        messagebox.showinfo("Успех", "Регистрация успешна!")
+        entry_login.delete(0, tk.END)
+        entry_pass.delete(0, tk.END)
+        update_list()
+    except:
+        messagebox.showerror("Ошибка", "Логин уже существует!")
+
+def login():
+    login = entry_login.get()
+    password = entry_pass.get()
+    
+    c.execute("SELECT * FROM users WHERE login=? AND pass=?", (login, hash_pass(password)))
+    if c.fetchone():
+        messagebox.showinfo("Успех", f"Добро пожаловать, {login}!")
+    else:
+        messagebox.showerror("Ошибка", "Неверный логин или пароль!")
+
+def delete_user():
+    selected = tree.selection()
+    if not selected:
+        messagebox.showerror("Ошибка", "Выберите пользователя!")
+        return
+    
+    user_id = tree.item(selected[0])['values'][0]
+    c.execute("DELETE FROM users WHERE id=?", (user_id,))
+    db.commit()
+    update_list()
+
+def update_list():
+    for item in tree.get_children():
+        tree.delete(item)
+    
+    for row in c.execute("SELECT id, login FROM users"):
+        tree.insert("", "end", values=row)
+
+def export_csv():
+    with open('users.csv', 'w') as f:
+        f.write("login,pass\n")
+        for row in c.execute("SELECT login, pass FROM users"):
+            f.write(f"{row[0]},{row[1]}\n")
+    messagebox.showinfo("Успех", "Экспортировано в users.csv")
+
+def import_csv():
+    try:
+        with open('users.csv', 'r') as f:
+            lines = f.readlines()[1:]
+            for line in lines:
+                l, p = line.strip().split(',')
+                c.execute("INSERT OR IGNORE INTO users (login, pass) VALUES (?, ?)", (l, p))
+            db.commit()
+        messagebox.showinfo("Успех", "Импорт выполнен!")
+        update_list()
+    except:
+        messagebox.showerror("Ошибка", "Файл users.csv не найден!")
+
+# ========== ИНТЕРФЕЙС ==========
+# Верхняя панель
+frame_top = ttk.LabelFrame(root, text="Вход / Регистрация", padding=10)
+frame_top.pack(fill="x", padx=10, pady=5)
+
+ttk.Label(frame_top, text="Логин:").grid(row=0, column=0, sticky="w")
+entry_login = ttk.Entry(frame_top, width=30)
+entry_login.grid(row=0, column=1, padx=5, pady=5)
+
+ttk.Label(frame_top, text="Пароль:").grid(row=1, column=0, sticky="w")
+entry_pass = ttk.Entry(frame_top, width=30, show="*")
+entry_pass.grid(row=1, column=1, padx=5, pady=5)
+
+btn_frame = ttk.Frame(frame_top)
+btn_frame.grid(row=2, column=0, columnspan=2, pady=10)
+
+ttk.Button(btn_frame, text="Регистрация", command=register, width=15).pack(side="left", padx=5)
+ttk.Button(btn_frame, text="Вход", command=login, width=15).pack(side="left", padx=5)
+
+# Список пользователей
+frame_list = ttk.LabelFrame(root, text="Пользователи", padding=10)
+frame_list.pack(fill="both", expand=True, padx=10, pady=5)
+
+tree = ttk.Treeview(frame_list, columns=("ID", "Логин"), show="headings", height=8)
+tree.heading("ID", text="ID")
+tree.heading("Логин", text="Логин")
+tree.column("ID", width=50)
+tree.column("Логин", width=200)
+
+scroll = ttk.Scrollbar(frame_list, orient="vertical", command=tree.yview)
+tree.configure(yscrollcommand=scroll.set)
+
+tree.pack(side="left", fill="both", expand=True)
+scroll.pack(side="right", fill="y")
+
+# Кнопки управления
+btn_frame2 = ttk.Frame(root)
+btn_frame2.pack(fill="x", padx=10, pady=5)
+
+ttk.Button(btn_frame2, text="Обновить список", command=update_list, width=15).pack(side="left", padx=5)
+ttk.Button(btn_frame2, text="Удалить", command=delete_user, width=15).pack(side="left", padx=5)
+ttk.Button(btn_frame2, text="Экспорт CSV", command=export_csv, width=15).pack(side="left", padx=5)
+ttk.Button(btn_frame2, text="Импорт CSV", command=import_csv, width=15).pack(side="left", padx=5)
+
+# Загрузка списка при запуске
+update_list()
+
+# ========== ЗАПУСК ==========
+root.mainloop()
+db.close()
