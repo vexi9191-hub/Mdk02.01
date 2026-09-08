@@ -1,0 +1,100 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==============================================
+# Вариант №5: f(x) = 5*sin(5x) + 10*cos(x)
+# Интервал [0, 15*pi]
+# ==============================================
+
+# 1. Определение функции через def
+def f(x):
+    return 5 * np.sin(5 * x) + 10 * np.cos(x)
+
+# 2. Генерация данных
+x = np.linspace(0, 15 * np.pi, 5000)
+
+# 3. Вычисление значений
+y_def = f(x)
+y_direct = 5 * np.sin(5 * x) + 10 * np.cos(x)
+
+# Для маркеров (разреженные точки)
+marker_step = 200
+x_marker = x[::marker_step]
+y_def_marker = y_def[::marker_step]
+y_direct_marker = y_direct[::marker_step]
+
+# Настройки оформления
+bg_color = '#f0f0e0'          # цвет фона (не белый)
+title_fs = 14
+label_fs = 12
+legend_fs = 10
+
+# ==============================================
+# СПОСОБ 1: графики РЯДОМ (1 строка, 2 колонки)
+# ==============================================
+plt.figure(1, figsize=(13, 5))
+plt.suptitle('Сравнение способов задания функции (рядом)', fontsize=16, fontweight='bold')
+
+# Левый график
+plt.subplot(1, 2, 1)
+plt.plot(x, y_def, color='blue', linewidth=1.2, label='через def')
+plt.plot(x_marker, y_def_marker, 'o', color='darkblue', markersize=4, label='узлы (def)')
+plt.title('f(x) через def', fontsize=title_fs)
+plt.xlabel('x', fontsize=label_fs)
+plt.ylabel('f(x)', fontsize=label_fs)
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend(fontsize=legend_fs)
+plt.gca().set_facecolor(bg_color)
+
+# Правый график
+plt.subplot(1, 2, 2)
+plt.plot(x, y_direct, color='red', linewidth=1.2, label='прямое выражение')
+plt.plot(x_marker, y_direct_marker, 's', color='darkred', markersize=4, label='узлы (прямое)')
+plt.title('f(x) прямым выражением', fontsize=title_fs)
+plt.xlabel('x', fontsize=label_fs)
+plt.ylabel('f(x)', fontsize=label_fs)
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend(fontsize=legend_fs)
+plt.gca().set_facecolor(bg_color)
+
+plt.tight_layout()
+plt.show()
+
+# ==============================================
+# СПОСОБ 2: графики ДРУГ ПОД ДРУГОМ (2 строки, 1 колонка)
+# ==============================================
+plt.figure(2, figsize=(8, 9))
+plt.suptitle('Сравнение способов задания функции (друг под другом)', fontsize=16, fontweight='bold')
+
+# Верхний график
+plt.subplot(2, 1, 1)
+plt.plot(x, y_def, color='green', linewidth=1.2, label='через def')
+plt.plot(x_marker, y_def_marker, '^', color='darkgreen', markersize=4, label='узлы (def)')
+plt.title('f(x) через def', fontsize=title_fs)
+plt.xlabel('x', fontsize=label_fs)
+plt.ylabel('f(x)', fontsize=label_fs)
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend(fontsize=legend_fs)
+plt.gca().set_facecolor(bg_color)
+
+# Нижний график
+plt.subplot(2, 1, 2)
+plt.plot(x, y_direct, color='purple', linewidth=1.2, label='прямое выражение')
+plt.plot(x_marker, y_direct_marker, 'D', color='darkviolet', markersize=4, label='узлы (прямое)')
+plt.title('f(x) прямым выражением', fontsize=title_fs)
+plt.xlabel('x', fontsize=label_fs)
+plt.ylabel('f(x)', fontsize=label_fs)
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend(fontsize=legend_fs)
+plt.gca().set_facecolor(bg_color)
+
+plt.tight_layout()
+plt.show()
+
+# ==============================================
+# Проверка идентичности (численное сравнение)
+# ==============================================
+if np.allclose(y_def, y_direct, rtol=1e-8):
+    print("\n✅ Вывод: Графики полностью совпадают. Оба способа дают одинаковый результат.")
+else:
+    print("\n⚠️ Вывод: Обнаружены различия (возможно, из-за погрешности вычислений).")
