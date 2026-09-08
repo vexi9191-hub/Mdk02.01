@@ -1,0 +1,257 @@
+"""
+Лабораторная работа: Сравнение способов задания функций в Python
+Вариант №5: f(x) = 5·sin(5x) + 10·cos(x)
+
+Цель работы: Сравнить два способа задания функции:
+  1. Через оператор def
+  2. Прямым математическим выражением в plot()
+
+Интервал: [0, 4π] - выбран для оптимальной наглядности
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ============================================================================
+# 1. ОПРЕДЕЛЕНИЕ ФУНКЦИЙ
+# ============================================================================
+
+def f(x):
+    """Функция, заданная через def (вариант №5)"""
+    return 5 * np.sin(5 * x) + 10 * np.cos(x)
+
+
+def f_direct(x):
+    """Функция, заданная прямым выражением (для проверки)"""
+    return 5 * np.sin(5 * x) + 10 * np.cos(x)
+
+
+# ============================================================================
+# 2. ГЕНЕРАЦИЯ ДАННЫХ
+# ============================================================================
+
+# Интервал [0, 4π] - красиво видно 10 периодов sin(5x)
+x = np.linspace(0, 4 * np.pi, 2000)
+
+# Вычисление значений
+y_def = f(x)                    # через def
+y_expr = f_direct(x)            # прямое выражение
+
+# Точки для маркеров (каждые 25-я точка)
+marker_step = 25
+x_markers = x[::marker_step]
+y_def_markers = y_def[::marker_step]
+y_expr_markers = y_expr[::marker_step]
+
+# ============================================================================
+# 3. ПРОВЕРКА ИДЕНТИЧНОСТИ
+# ============================================================================
+
+print("\n" + "=" * 70)
+print(" ПРОВЕРКА ИДЕНТИЧНОСТИ ДВУХ СПОСОБОВ ЗАДАНИЯ ФУНКЦИИ")
+print("=" * 70)
+
+is_identical = np.allclose(y_def, y_expr, rtol=1e-10)
+max_diff = np.max(np.abs(y_def - y_expr))
+
+print(f"  Статус: {'✅ ГРАФИКИ ИДЕНТИЧНЫ' if is_identical else '❌ ЕСТЬ РАЗЛИЧИЯ'}")
+print(f"  Максимальное отклонение: {max_diff:.2e}")
+print("=" * 70 + "\n")
+
+# ============================================================================
+# 4. НАСТРОЙКИ ВИЗУАЛИЗАЦИИ
+# ============================================================================
+
+# Цветовая палитра
+COLORS = {
+    'def_line': '#1a5276',      # тёмно-синий
+    'def_marker': '#2980b9',    # ярко-синий
+    'expr_line': '#922b21',     # тёмно-красный
+    'expr_marker': '#e74c3c',   # ярко-красный
+    'bg': '#f8f9f9',            # почти белый (светло-серый)
+    'grid': '#bdc3c7',          # серый для сетки
+}
+
+# Параметры шрифтов
+FONT = {
+    'title': 16,
+    'subtitle': 13,
+    'axis': 12,
+    'legend': 11,
+    'suptitle': 18,
+}
+
+# Параметры линий
+LINE = {
+    'width': 2.0,
+    'marker_size': 6,
+    'alpha': 0.85,
+}
+
+
+def setup_axes(ax, title, xlabel='x', ylabel='f(x)'):
+    """Единая настройка оформления осей"""
+    ax.set_title(title, fontsize=FONT['subtitle'], fontweight='bold', pad=10)
+    ax.set_xlabel(xlabel, fontsize=FONT['axis'])
+    ax.set_ylabel(ylabel, fontsize=FONT['axis'])
+    ax.grid(True, linestyle='--', alpha=0.4, color=COLORS['grid'], linewidth=0.8)
+    ax.set_facecolor(COLORS['bg'])
+    ax.tick_params(labelsize=10)
+    return ax
+
+
+# ============================================================================
+# 5. СПОСОБ 1: ГРАФИКИ РЯДОМ
+# ============================================================================
+
+def plot_side_by_side():
+    """Два графика рядом (1 строка, 2 колонки)"""
+    
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5))
+    fig.patch.set_facecolor('#f0f3f5')  # цвет всего рисунка
+    
+    fig.suptitle('Сравнение способов задания функции  |  Вариант №5', 
+                 fontsize=FONT['suptitle'], fontweight='bold', 
+                 color='#2c3e50', y=1.02)
+    
+    # --- Левый график: через def ---
+    ax1.plot(x, y_def, color=COLORS['def_line'], 
+             linewidth=LINE['width'], alpha=LINE['alpha'], 
+             label='f(x) через def')
+    
+    ax1.plot(x_markers, y_def_markers, 'o', 
+             color=COLORS['def_marker'], 
+             markersize=LINE['marker_size'], 
+             markeredgecolor='white', markeredgewidth=0.5,
+             label='опорные точки')
+    
+    ax1.axhline(y=0, color='black', linewidth=0.5, alpha=0.3)
+    setup_axes(ax1, 'График: определение через def')
+    ax1.legend(loc='upper right', fontsize=FONT['legend'], framealpha=0.9)
+    
+    # --- Правый график: прямое выражение ---
+    ax2.plot(x, y_expr, color=COLORS['expr_line'], 
+             linewidth=LINE['width'], alpha=LINE['alpha'],
+             label='прямое выражение')
+    
+    ax2.plot(x_markers, y_expr_markers, 's', 
+             color=COLORS['expr_marker'],
+             markersize=LINE['marker_size'],
+             markeredgecolor='white', markeredgewidth=0.5,
+             label='опорные точки')
+    
+    ax2.axhline(y=0, color='black', linewidth=0.5, alpha=0.3)
+    setup_axes(ax2, 'График: прямое выражение в plot()')
+    ax2.legend(loc='upper right', fontsize=FONT['legend'], framealpha=0.9)
+    
+    plt.tight_layout()
+    plt.show()
+
+
+# ============================================================================
+# 6. СПОСОБ 2: ГРАФИКИ ДРУГ ПОД ДРУГОМ
+# ============================================================================
+
+def plot_vertically():
+    """Два графика друг под другом (2 строки, 1 колонка)"""
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 10))
+    fig.patch.set_facecolor('#f0f3f5')
+    
+    fig.suptitle('Сравнение способов задания функции  |  Вариант №5', 
+                 fontsize=FONT['suptitle'], fontweight='bold',
+                 color='#2c3e50', y=0.98)
+    
+    # --- Верхний график: через def ---
+    ax1.plot(x, y_def, color='#1b7a34', 
+             linewidth=LINE['width'], alpha=LINE['alpha'],
+             label='через def')
+    
+    ax1.plot(x_markers, y_def_markers, '^', 
+             color='#27ae60',
+             markersize=LINE['marker_size'],
+             markeredgecolor='white', markeredgewidth=0.5,
+             label='опорные точки')
+    
+    ax1.axhline(y=0, color='black', linewidth=0.5, alpha=0.3)
+    setup_axes(ax1, 'График: определение через def')
+    ax1.legend(loc='upper right', fontsize=FONT['legend'], framealpha=0.9)
+    
+    # --- Нижний график: прямое выражение ---
+    ax2.plot(x, y_expr, color='#6c3483', 
+             linewidth=LINE['width'], alpha=LINE['alpha'],
+             label='прямое выражение')
+    
+    ax2.plot(x_markers, y_expr_markers, 'D', 
+             color='#8e44ad',
+             markersize=LINE['marker_size'] - 1,
+             markeredgecolor='white', markeredgewidth=0.5,
+             label='опорные точки')
+    
+    ax2.axhline(y=0, color='black', linewidth=0.5, alpha=0.3)
+    setup_axes(ax2, 'График: прямое выражение в plot()')
+    ax2.legend(loc='upper right', fontsize=FONT['legend'], framealpha=0.9)
+    
+    plt.tight_layout()
+    plt.show()
+
+
+# ============================================================================
+# 7. ИНФОРМАЦИЯ О ЗАДАНИИ
+# ============================================================================
+
+def print_info():
+    """Вывод информации о задании"""
+    print("=" * 70)
+    print(" ИНФОРМАЦИЯ О ЗАДАНИИ")
+    print("=" * 70)
+    print(f"  Вариант:          №5")
+    print(f"  Функция:          f(x) = 5·sin(5x) + 10·cos(x)")
+    print(f"  Интервал:         [0, {4*np.pi:.2f}] = [0, {4*np.pi:.2f}]")
+    print(f"  Количество точек: {len(x)}")
+    print(f"  Шаг маркеров:     {marker_step}")
+    print("=" * 70 + "\n")
+
+
+# ============================================================================
+# 8. ГЛАВНАЯ ФУНКЦИЯ
+# ============================================================================
+
+def main():
+    """Главная функция программы"""
+    
+    # Вывод информации
+    print_info()
+    
+    # Проверка идентичности
+    if np.allclose(y_def, y_expr, rtol=1e-10):
+        print("✅ Графики совпадают. Оба способа дают одинаковый результат.\n")
+    
+    # Построение графиков
+    print("📊 Построение графиков (рядом)...")
+    plot_side_by_side()
+    
+    print("📊 Построение графиков (друг под другом)...")
+    plot_vertically()
+    
+    # Вывод заключения
+    print("\n" + "=" * 70)
+    print(" ЗАКЛЮЧЕНИЕ")
+    print("=" * 70)
+    print("  1. Графики, построенные через 'def' и прямым выражением,")
+    print("     полностью идентичны.")
+    print("  2. Оба способа задания функций в Python равноправны.")
+    print("  3. Выбор способа зависит от удобства:")
+    print("     - 'def' лучше для сложных/многоразовых функций")
+    print("     - прямое выражение удобно для коротких формул")
+    print("=" * 70 + "\n")
+    
+    print("✅ Программа успешно завершена.")
+
+
+# ============================================================================
+# 9. ЗАПУСК
+# ============================================================================
+
+if __name__ == "__main__":
+    main()
